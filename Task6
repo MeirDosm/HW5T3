@@ -1,0 +1,219 @@
+#include <iostream>
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+#include <time.h>
+using namespace std;
+
+/* run this program using the console pauser or add your own getch, system("pause") or input loop */
+
+#define DECK_SIZE 54
+#define HAND_SIZE 5
+
+#define JACK 11
+#define QUEEN 12
+#define KING 13
+#define ACE 14
+#define JOKER 15
+
+#define CLUB 1
+#define SPADE 2
+#define HEART 3
+#define DIAMOND 4
+
+#define BLACK 5
+#define RED 6
+
+typedef struct {
+    // Karta
+    unsigned short int value;
+    // Mast'
+    unsigned short int lear;
+} poker_card;
+
+// Poluchit' psevdo-sluchainoe chislo
+unsigned int get_pseudo_random_number(unsigned int begin, unsigned int end, int additional_entropy)
+{
+    // Vremennaya entropiya dlya psevdo-randoma
+    srand(time(NULL) * additional_entropy);
+    return rand() % end + begin;
+}
+
+// Inicializaciya kartochnoi kolody
+void init_card_deck(poker_card deck[])
+{
+    int i, j;
+    int x = 0;
+    poker_card card;
+    for (i = CLUB; i <= DIAMOND; i++) {
+        for (j = 2; j <= ACE; j++) {
+            card.lear = i;
+            card.value = j;
+            deck[x] = card;
+            x++;
+        }
+    }
+    // Dobavlenie dvuh jokerov v kolodu
+    card.value = JOKER;
+    card.lear = BLACK;
+    deck[x] = card;
+    x++;
+    card.lear = RED;
+    deck[x] = card;
+}
+
+// Razdat' 5 sluchainyh kart
+void deal_the_cards(poker_card hand[], poker_card deck[], unsigned int hand_size)
+{
+    int i, x;
+    for (i = 0; i < hand_size; i++) {
+        x = get_pseudo_random_number(0, DECK_SIZE - 1, i + 1);
+        hand[i] = deck[x];
+    }
+}
+
+char* print_card_lear(unsigned short int lear)
+{
+    char* s;
+    switch(lear) {
+        case CLUB:
+            // trefy
+            s = "clubs"; 
+            break;
+        case SPADE:
+            // piki
+            s = "spades";
+            break;
+        case HEART:
+            // chervi
+            s = "hearts";
+            break;
+        case DIAMOND:
+            // bubny
+            s = "diamonds";
+            break;
+            case BLACK:
+            // chernyi joker
+            s = "black";
+            break;
+        case RED:
+            // krasnyi joker
+            s = "red";
+            break;
+        default:
+            s = "";
+            break;
+    }
+    cout << s;
+}
+
+void print_card_value(unsigned short int value)
+{
+    char* s;
+    if (value <= 10) {
+        cout << value;
+    }
+    switch (value) {
+        case JACK:
+            // valet
+            s = "jack";
+            break;
+        case QUEEN:
+            // dama
+            s = "queen";
+            break;
+        case KING:
+            // korol'
+            s = "king";
+            break;
+        case ACE:
+            // tuz
+            s = "ace";
+            break;
+        case JOKER:
+            // joker
+            s = "joker";
+            break;
+        default:
+            s = "";
+            break;
+    }
+    cout << s;
+}
+
+void sort_hand(poker_card hand[], unsigned int size)
+{
+    int i, j;
+    poker_card sort_buf;
+    for (j = 0; j < size - 1; j++) {
+        for (i = 0; i < size - j - 1; i++) {
+            if (hand[i].value > hand[i + 1].value) {
+                sort_buf = hand[i];
+                hand[i] = hand[i + 1];
+                hand[i + 1] = sort_buf;
+            }
+        }
+    }
+}
+
+void print_detected_combination(poker_card hand[], unsigned int size)
+{
+    // Kolichestvo kart odnogo znacheniya
+    int repeat_value = 1;
+    // Kolichestvo kart odnoi masti
+    int repeat_lear = 1;
+    int i;
+
+    for (i = 0; i < size - 1; i++) {
+        if (hand[i].value == hand[i + 1].value || hand[i].value == JOKER || hand[i + 1].value == JOKER) {
+            repeat_value++;
+        }
+        if (hand[i].lear == hand[i + 1].lear || hand[i].value == JOKER || hand[i + 1].value == JOKER) {
+            repeat_lear++;
+        }
+    }
+    
+    if (repeat_value == 2) {
+        // Para
+        cout << "Pair detected!\n";
+    } else if (repeat_value == 3) {
+        // Set
+        cout << "Set detected!\n";
+    } else if (repeat_value == 4) {
+        // Poker
+        cout << "Poker detected\n";
+    }
+    // Flash
+    if (repeat_lear == size) {
+        cout << "Flash detected!\n";
+    } else if (repeat_value < 2) {
+        cout << "No combinations detected...\n";
+    }
+}
+
+void print_card(poker_card card)
+{
+    print_card_lear(card.lear);
+    cout << " ";
+    print_card_value(card.value);
+    cout << "\n";
+}
+
+int main(int argc, char* argv[])
+{
+    poker_card deck[DECK_SIZE];
+    init_card_deck(deck);
+
+    // Kartochnaya ruka
+    poker_card hand[5];
+    // Razdat' karty odnomu igroku
+    deal_the_cards(hand, deck, HAND_SIZE);
+    sort_hand(hand, HAND_SIZE);
+    int i;
+    for (i = 0; i < HAND_SIZE; i++) {
+        print_card(hand[i]);
+    }
+    cout << "\nCombinations:\n";
+    print_detected_combination(hand, HAND_SIZE);
+    return 0;
+}
